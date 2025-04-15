@@ -5,6 +5,7 @@ Metadata export module
 import os
 import tempfile
 import pandas as pd
+import shutil
 
 def export_metadata(renamed_images, format='excel'):
     """
@@ -17,8 +18,9 @@ def export_metadata(renamed_images, format='excel'):
     Returns:
         str: Path to the exported file
     """
-    # Create a temporary file
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx' if format == 'excel' else '.csv') as temp_file:
+    # Create a temporary file with appropriate suffix
+    file_suffix = '.xlsx' if format == 'excel' else '.csv'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=file_suffix) as temp_file:
         temp_path = temp_file.name
     
     # Prepare data for DataFrame
@@ -32,7 +34,7 @@ def export_metadata(renamed_images, format='excel'):
             'New Filename': image['new_name'],
             'Short Description': metadata.short_description,
             'Categories': ', '.join(metadata.categories),
-            'Dominant Colors': ', '.join(metadata.dominant_colors),
+            'Color Type': 'Color' if metadata.is_color else 'Black & White',
             'Mood': metadata.mood
         })
     
@@ -63,4 +65,14 @@ def export_metadata(renamed_images, format='excel'):
     else:
         df.to_csv(temp_path, index=False)
     
-    return temp_path 
+    # Create the final file path with the desired filename
+    final_filename = 'overview' + file_suffix
+    final_path = os.path.join(os.path.dirname(temp_path), final_filename)
+    
+    # Copy the temp file to the final file with the desired name
+    shutil.copy2(temp_path, final_path)
+    
+    # Clean up the temp file
+    os.remove(temp_path)
+    
+    return final_path 

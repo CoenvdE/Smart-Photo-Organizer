@@ -68,12 +68,14 @@ pip install -r requirements.txt
 ### Command-line arguments
 
 ```
-python src/main.py [--input-folder-id FOLDER_ID] [--output-folder-name NAME] [--format {csv,excel}]
+python src/main.py [--input-folder-id FOLDER_ID] [--output-folder-name NAME] [--format {csv,excel}] [--categories CATEGORIES] [--moods MOODS]
 ```
 
 - `--input-folder-id`: (Optional) Google Drive folder ID to process
 - `--output-folder-name`: (Optional) Name for the output folder (default: "Processed Photos")
 - `--format`: (Optional) Format for metadata export: 'csv' or 'excel' (default: excel)
+- `--categories`: (Optional) Custom categories to use (comma-separated)
+- `--moods`: (Optional) Custom moods to use (comma-separated)
 
 ### Interactive mode
 
@@ -96,6 +98,9 @@ python src/main.py --input-folder-id 1a2b3c4d5e6f7g8h9i0j --format csv
 
 # Process a specific folder and customize output folder name
 python src/main.py --input-folder-id 1a2b3c4d5e6f7g8h9i0j --output-folder-name "Beach Trip Photos"
+
+# Process with custom categories and moods
+python src/main.py --categories "beach,mountains,city,forest,portraits" --moods "serene,vibrant,gloomy,cheerful"
 ```
 
 ## Output
@@ -103,12 +108,12 @@ python src/main.py --input-folder-id 1a2b3c4d5e6f7g8h9i0j --output-folder-name "
 The tool generates two types of output:
 
 1. **Renamed image files** in the format: `001-SHORT_DESCRIPTION.jpg`
-2. **Metadata file** (Excel or CSV) with the following columns:
+2. **Metadata file** ("overview.xlsx" or "overview.csv") with the following columns:
    - Original Filename
    - New Filename
    - Short Description
    - Categories
-   - Dominant Colors
+   - Color Type (Color or Black & White)
    - Mood
 
 Both outputs are saved to a new folder in your Google Drive.

@@ -25,6 +25,10 @@ def parse_arguments():
                         help='Name for the output folder')
     parser.add_argument('--format', choices=['csv', 'excel'], default='excel',
                         help='Format for metadata export (default: excel)')
+    parser.add_argument('--categories', 
+                        help='Custom categories to use (comma-separated)')
+    parser.add_argument('--moods', 
+                        help='Custom moods to use (comma-separated)')
     return parser.parse_args()
 
 def main():
@@ -36,6 +40,15 @@ def main():
     args = parse_arguments()
     
     try:
+        # Process custom categories and moods if provided
+        custom_categories = None
+        if args.categories:
+            custom_categories = [cat.strip() for cat in args.categories.split(',')]
+            
+        custom_moods = None
+        if args.moods:
+            custom_moods = [mood.strip() for mood in args.moods.split(',')]
+        
         # Authenticate with Google Drive
         print("Authenticating with Google Drive...")
         credentials = authenticate()
@@ -64,8 +77,11 @@ def main():
         
         print(f"Found {len(image_files)} image files.")
         
-        # Initialize image analyzer
-        analyzer = ImageAnalyzer()
+        # Initialize image analyzer with custom settings if provided
+        analyzer = ImageAnalyzer(
+            custom_categories=custom_categories,
+            custom_moods=custom_moods
+        )
         
         # Process images
         print("Processing images...")

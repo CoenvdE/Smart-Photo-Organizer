@@ -53,7 +53,7 @@ def rename_images(processed_images):
         description = sanitize_description(metadata.short_description)
         
         # Create the new filename
-        new_name = f"{i:03d}-{description}{extension}"
+        new_name = f"{i:04d}-{description}{extension}"
         
         # Add to renamed images list
         renamed_images.append({

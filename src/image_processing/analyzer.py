@@ -7,7 +7,7 @@ import base64
 from PIL import Image
 import io
 import colorsys
-from openai import OpenAI
+import openai
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -16,7 +16,7 @@ class ImageMetadata(BaseModel):
     original_filename: str
     short_description: str
     categories: List[str]
-    dominant_colors: List[str]
+    is_color: bool  # True if color, False if black and white
     mood: Optional[str] = None
 
 class ImageAnalyzer:
@@ -24,13 +24,31 @@ class ImageAnalyzer:
     Analyzes images using OpenAI's Vision capabilities
     """
     
-    def __init__(self):
-        """Initialize the image analyzer"""
+    def __init__(self, custom_categories=None, custom_moods=None):
+        """
+        Initialize the image analyzer
+        
+        Args:
+            custom_categories (list, optional): Custom categories to use for image classification
+            custom_moods (list, optional): Custom mood options to use for image classification
+        """
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OPENAI_API_KEY environment variable not set")
         
-        self.client = OpenAI(api_key=api_key)
+        openai.api_key = api_key
+        
+        # Set default categories if none provided
+        self.categories = custom_categories or [
+            "nature", "people", "urban", "food", "animals", 
+            "abstract", "landscape", "architecture", "product", "art", "technology"
+        ]
+        
+        # Set default moods if none provided
+        self.moods = custom_moods or [
+            "happy", "sad", "calm", "energetic", "peaceful", 
+            "tense", "mysterious", "romantic", "nostalgic", "dramatic"
+        ]
         
     def _encode_image_to_base64(self, image_path):
         """
@@ -45,16 +63,15 @@ class ImageAnalyzer:
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
     
-    def _extract_dominant_colors(self, image_path, num_colors=5):
+    def _is_color_image(self, image_path):
         """
-        Extract dominant colors from an image
+        Determine if an image is color or black and white
         
         Args:
             image_path (str): Path to the image
-            num_colors (int): Number of dominant colors to extract
             
         Returns:
-            list: List of color names
+            bool: True if the image is in color, False if black and white
         """
         # Open image and convert to RGB
         img = Image.open(image_path).convert('RGB')
@@ -65,62 +82,16 @@ class ImageAnalyzer:
         # Get colors
         colors = img.getcolors(10000)  # Get all colors
         
-        # Sort by count (first element in the tuple)
-        colors.sort(reverse=True, key=lambda x: x[0])
-        
-        # Take top num_colors
-        top_colors = colors[:num_colors]
-        
-        # Convert RGB to color names (using simple RGB descriptors)
-        color_names = []
-        for count, (r, g, b) in top_colors:
-            # Convert RGB to HSV for better color naming
-            h, s, v = colorsys.rgb_to_hsv(r/255, g/255, b/255)
-            
-            # Determine color name based on HSV
-            color_name = self._get_color_name(h, s, v)
-            if color_name not in color_names:  # Avoid duplicates
-                color_names.append(color_name)
-        
-        return color_names
-    
-    def _get_color_name(self, h, s, v):
-        """
-        Get a color name from HSV values
-        
-        Args:
-            h (float): Hue [0,1]
-            s (float): Saturation [0,1]
-            v (float): Value [0,1]
-            
-        Returns:
-            str: Color name
-        """
-        # Convert hue to degrees for easier comparison
-        h_deg = h * 360
-        
-        # For grayscale colors
-        if s < 0.1:
-            if v < 0.3:
-                return "Black"
-            elif v < 0.7:
-                return "Gray"
-            else:
-                return "White"
+        # Check if the image has meaningful color variation
+        is_color = False
+        for _, (r, g, b) in colors:
+            # TODO: is this true
+            # If R, G, and B values differ by more than a threshold, it's a color image
+            if max(abs(r - g), abs(r - b), abs(g - b)) > 15:
+                is_color = True
+                break
                 
-        # For colors
-        if h_deg < 30 or h_deg >= 330:
-            return "Red"
-        elif h_deg < 90:
-            return "Yellow"
-        elif h_deg < 150:
-            return "Green"
-        elif h_deg < 210:
-            return "Cyan"
-        elif h_deg < 270:
-            return "Blue"
-        else:
-            return "Magenta"
+        return is_color
     
     def analyze(self, image_path, original_filename):
         """
@@ -136,12 +107,19 @@ class ImageAnalyzer:
         # Encode image to base64
         base64_image = self._encode_image_to_base64(image_path)
         
+        # Check if image is color or black and white
+        is_color = self._is_color_image(image_path)
+        
+        # Format categories and moods for the prompt
+        categories_str = ", ".join(self.categories)
+        moods_str = ", ".join(self.moods)
+        
         # Construct the prompt
-        prompt = """
+        prompt = f"""
         Analyze this image and provide the following information:
         1. A concise description (5 words or less) that captures the essence of the image
-        2. TODO: FIX LATER Categories that apply to this image (comma-separated, choose from: nature, people, urban, food, animals, abstract, landscape, architecture, product, art, technology)
-        3. The overall mood/feeling of the image (one word)
+        2. Categories that apply to this image (comma-separated, choose from: {categories_str})
+        3. The overall mood/feeling of the image (choose one from: {moods_str})
         
         Format your response as:
         Short Description: [short description]
@@ -150,8 +128,8 @@ class ImageAnalyzer:
         """
         
         # Call the OpenAI API
-        response = self.client.chat.completions.create(
-            model="gpt-4-vision-preview",
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",  # Use the current stable model that supports vision
             messages=[
                 {
                     "role": "user",
@@ -171,7 +149,7 @@ class ImageAnalyzer:
         )
         
         # Parse the response
-        result = response.choices[0].message.content
+        result = response.choices[0].message['content']
         
         # Extract information
         short_description = ""
@@ -188,14 +166,11 @@ class ImageAnalyzer:
             elif line.startswith("Mood:"):
                 mood = line.replace("Mood:", "").strip()
         
-        # Extract dominant colors
-        dominant_colors = self._extract_dominant_colors(image_path)
-        
         # Create and return the metadata
         return ImageMetadata(
             original_filename=original_filename,
             short_description=short_description,
             categories=categories,
-            dominant_colors=dominant_colors,
+            is_color=is_color,
             mood=mood
         ) 

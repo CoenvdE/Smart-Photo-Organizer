@@ -2,10 +2,12 @@ google-auth-oauthlib==1.0.0
 google-api-python-client==2.89.0
 google-auth-httplib2==0.1.0
 pandas==2.0.3
+numpy==1.23.5
 openpyxl==3.1.2
 Pillow==10.0.0
 python-dotenv==1.0.0
-openai==1.2.0
+openai==0.27.8
+httpx==0.24.1
+httpcore==0.17.3
 tqdm==4.65.0
-pydantic==2.0.3 
-dotenv==1.0.0
+pydantic==2.0.3

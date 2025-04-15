@@ -8,9 +8,11 @@ drive_json/
 ## Features
 
 - **Google Drive Integration**: Authenticate via OAuth2, select folders, read/write images
-- **AI Image Analysis**: Extract descriptions, categories, colors, and mood from photos
-- **Smart Renaming**: Rename files following the format `###-SHORT_DESCRIPTION.jpg`
-- **Metadata Export**: Generate CSV/Excel file with comprehensive image metadata
+- **AI Image Analysis**: Extract descriptions, categories, and mood from photos
+- **Color Detection**: Automatically identify if an image is color or black & white
+- **Smart Renaming**: Rename files following the format `0001-SHORT_DESCRIPTION.jpg`
+- **Metadata Export**: Generate Excel/CSV file with comprehensive image metadata
+- **Customization**: Define your own categories and mood options
 
 ## Setup
 
@@ -43,8 +45,15 @@ drive_json/
 Run the main script:
 
 ```
-python src/main.py
+python src/main.py [options]
 ```
+
+Available options:
+- `--input-folder-id FOLDER_ID`: Google Drive folder ID to process
+- `--output-folder-name NAME`: Name for the output folder (default: "Processed Photos")
+- `--format {csv,excel}`: Format for metadata export (default: excel)
+- `--categories CATEGORIES`: Custom categories to use (comma-separated)
+- `--moods MOODS`: Custom moods to use (comma-separated)
 
 Follow the prompts to:
 1. Authenticate with Google Drive
