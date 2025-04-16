@@ -63,3 +63,9 @@ yarn-error.log*
 *.swp
 *.swo
 .DS_Store
+
+# Add to .gitignore
+.env
+token.pickle
+.streamlit/secrets.toml
+drive_json/credentials.json

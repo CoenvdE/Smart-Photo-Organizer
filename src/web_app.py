@@ -29,8 +29,26 @@ st.set_page_config(
     layout="wide",
 )
 
+# Configure OpenAI API key
+def configure_api_keys():
+    """Configure API keys from Streamlit secrets or environment variables"""
+    # Try to get API key from Streamlit secrets
+    if 'OPENAI_API_KEY' in st.secrets:
+        os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
+    
+    # Check if API key is set
+    if 'OPENAI_API_KEY' not in os.environ:
+        st.error(
+            "OpenAI API key not found! "
+            "Please set it in Streamlit secrets or as an environment variable."
+        )
+        st.stop()
+
 def main():
     """Main entry point for the Streamlit app"""
+    
+    # Configure API keys
+    configure_api_keys()
     
     st.title("Smart Photo Organizer")
     st.subheader("Organize your photos with AI")
@@ -248,15 +266,30 @@ def process_drive_images(export_format, custom_categories, custom_moods):
     
     st.header("Connect to Google Drive")
     
-    # Check for credentials
+    # In the cloud, we'll need to provide a way to upload credentials.json
     credentials_file = Path("drive_json/credentials.json")
+    
     if not credentials_file.exists():
-        st.error(
-            "Google Drive credentials not found. "
-            "Please set up credentials.json in the drive_json folder. "
-            "See README.md for instructions."
+        st.warning(
+            "Google Drive credentials not found. Please upload your credentials.json file:"
         )
-        return
+        
+        # Add upload field for credentials.json
+        credentials_upload = st.file_uploader(
+            "Upload your credentials.json file",
+            type=["json"]
+        )
+        
+        if credentials_upload is not None:
+            # Make sure the directory exists
+            os.makedirs("drive_json", exist_ok=True)
+            
+            # Save credentials
+            with open(credentials_file, "wb") as f:
+                f.write(credentials_upload.getbuffer())
+            
+            st.success("Credentials file uploaded successfully!")
+            st.rerun()
     
     # Connect to Google Drive
     if st.button("Connect to Google Drive"):
