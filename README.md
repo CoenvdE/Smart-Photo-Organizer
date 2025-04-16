@@ -13,6 +13,8 @@ drive_json/
 - **Smart Renaming**: Rename files following the format `0001-SHORT_DESCRIPTION.jpg`
 - **Metadata Export**: Generate Excel/CSV file with comprehensive image metadata
 - **Customization**: Define your own categories and mood options
+- **Import Categories/Moods**: Import custom categories and moods from CSV or TXT files
+- **Web Interface**: User-friendly Streamlit web app for both local and Google Drive processing
 
 ## Setup
 
@@ -42,6 +44,8 @@ drive_json/
 
 ## Usage
 
+### Command-line Interface
+
 Run the main script:
 
 ```
@@ -54,6 +58,57 @@ Available options:
 - `--format {csv,excel}`: Format for metadata export (default: excel)
 - `--categories CATEGORIES`: Custom categories to use (comma-separated)
 - `--moods MOODS`: Custom moods to use (comma-separated)
+- `--import-file FILE`: Import categories and moods from a CSV or TXT file
+
+### Web Interface
+
+For a more user-friendly experience, you can use the Streamlit web app:
+
+```
+streamlit run src/web_app.py
+```
+
+The web app provides:
+- Local image upload and processing
+- Google Drive integration
+- Easy import of categories and moods
+- Visual progress tracking
+- Results visualization
+- Downloadable ZIP of processed files (for local uploads)
+
+### Importing Categories and Moods
+
+You can import custom categories and moods from files in two formats:
+
+1. **CSV Format**:
+   - First column: Categories
+   - Second column: Moods
+   
+   Example:
+   ```
+   nature,happy
+   people,sad
+   urban,calm
+   food,energetic
+   ```
+
+2. **TXT Format**:
+   - Categories listed first
+   - Separator line with only "---"
+   - Moods listed after the separator
+   
+   Example:
+   ```
+   nature
+   people
+   urban
+   food
+   ---
+   happy
+   sad
+   calm
+   energetic
+   ```
 
 Follow the prompts to:
 1. Authenticate with Google Drive
@@ -71,7 +126,8 @@ smart-photo-organizer/
 │   └── credentials.json    # Google API credentials (not included in repo)
 ├── .env                    # Environment variables (not included in repo)
 ├── src/
-│   ├── main.py             # Entry point
+│   ├── main.py             # Command-line entry point
+│   ├── web_app.py          # Streamlit web app 
 │   ├── auth/
 │   │   └── google_auth.py  # Google authentication
 │   ├── drive/
@@ -81,7 +137,8 @@ smart-photo-organizer/
 │   │   ├── analyzer.py     # Image analysis with AI
 │   │   └── renamer.py      # Image renaming logic
 │   └── metadata/
-│       └── export.py       # Metadata CSV/Excel generation
+│       ├── export.py       # Metadata CSV/Excel generation
+│       └── import_file.py  # Import categories/moods from files
 └── tests/                  # Unit tests
 ```
 

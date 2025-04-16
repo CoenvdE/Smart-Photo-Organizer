@@ -16,6 +16,7 @@ from drive.utils import select_folder, create_output_folder
 from image_processing.analyzer import ImageAnalyzer
 from image_processing.renamer import rename_images
 from metadata.export import export_metadata
+from metadata.import_file import import_from_file
 
 def parse_arguments():
     """Parse command line arguments"""
@@ -29,6 +30,8 @@ def parse_arguments():
                         help='Custom categories to use (comma-separated)')
     parser.add_argument('--moods', 
                         help='Custom moods to use (comma-separated)')
+    parser.add_argument('--import-file',
+                        help='Import categories and moods from a CSV or TXT file')
     return parser.parse_args()
 
 def main():
@@ -40,13 +43,28 @@ def main():
     args = parse_arguments()
     
     try:
-        # Process custom categories and moods if provided
+        # Process custom categories and moods
         custom_categories = None
-        if args.categories:
+        custom_moods = None
+        
+        # Check if import file is provided
+        if args.import_file:
+            if not os.path.exists(args.import_file):
+                print(f"Error: Import file '{args.import_file}' not found.")
+                return 1
+                
+            print(f"Importing categories and moods from '{args.import_file}'...")
+            try:
+                custom_categories, custom_moods = import_from_file(args.import_file)
+                print(f"Imported {len(custom_categories)} categories and {len(custom_moods)} moods.")
+            except Exception as e:
+                print(f"Error importing from file: {str(e)}")
+                return 1
+        # If no import file but categories/moods provided as arguments
+        elif args.categories:
             custom_categories = [cat.strip() for cat in args.categories.split(',')]
             
-        custom_moods = None
-        if args.moods:
+        if args.moods and not args.import_file:
             custom_moods = [mood.strip() for mood in args.moods.split(',')]
         
         # Authenticate with Google Drive
