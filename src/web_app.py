@@ -32,26 +32,51 @@ st.set_page_config(
 # Configure OpenAI API key
 def configure_api_keys():
     """Configure API keys from Streamlit secrets or environment variables"""
-    # Try to get API key from Streamlit secrets
-    if 'OPENAI_API_KEY' in st.secrets:
-        os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
-    
-    # Check if API key is set
-    if 'OPENAI_API_KEY' not in os.environ:
-        st.error(
-            "OpenAI API key not found! "
-            "Please set it in Streamlit secrets or as an environment variable."
-        )
-        st.stop()
+    try:
+        # Try to get API key from Streamlit secrets
+        if 'OPENAI_API_KEY' in st.secrets:
+            os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
+        
+        # Check if API key is set
+        if 'OPENAI_API_KEY' not in os.environ:
+            st.error(
+                "OpenAI API key not found! "
+                "Please set it in Streamlit secrets or as an environment variable."
+            )
+            
+            # Provide option to enter API key manually
+            api_key = st.text_input("Enter your OpenAI API key:", type="password")
+            if api_key:
+                os.environ['OPENAI_API_KEY'] = api_key
+                st.success("API key set successfully!")
+                return True
+            else:
+                st.info("Please enter your OpenAI API key to continue.")
+                return False
+        return True
+    except Exception as e:
+        st.error(f"Error configuring API keys: {str(e)}")
+        
+        # Provide option to enter API key manually
+        api_key = st.text_input("Enter your OpenAI API key:", type="password")
+        if api_key:
+            os.environ['OPENAI_API_KEY'] = api_key
+            st.success("API key set successfully!")
+            return True
+        else:
+            st.info("Please enter your OpenAI API key to continue.")
+            return False
 
 def main():
     """Main entry point for the Streamlit app"""
     
-    # Configure API keys
-    configure_api_keys()
-    
     st.title("Smart Photo Organizer")
     st.subheader("Organize your photos with AI")
+    
+    # Configure API keys
+    if not configure_api_keys():
+        # If API key configuration failed, don't proceed further
+        return
     
     # Sidebar for app navigation and options
     with st.sidebar:
